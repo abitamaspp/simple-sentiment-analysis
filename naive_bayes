@@ -18,64 +18,64 @@ setup_twitter_oauth("aaaa",
 
 tweets <- searchTwitter("kueri / query", n = 2000, lang = "id")
 
-df_tweets <- twListToDF(sentimen)
+df_tweets <- twListToDF(tweets)
 #################################################################################
 
 # Buat file .csv / create .csv file
 
-write.csv(df_tweets$text, file = "file_name.csv", row.names = F)
+write.csv(df_tweets$text, file = "csv_tweets.csv", row.names = F)
 ##################################################################################
 
 # Pre-processing di RStudio / Pre-processing at RStudio
 
-teks_sentimen <- read.csv("lbl_teks_sentimen.csv", sep = ";")
-teks_sentimen$teks <- as.character(teks_sentimen$teks)
-teks_sentimen$teks <- tolower(teks_sentimen$teks)
-teks_sentimen$teks <- gsub("https://t.co/\\w+", " ", teks_sentimen$teks)
-teks_sentimen$teks <- gsub("@\\w+", " ", teks_sentimen$teks)
-teks_sentimen$teks <- gsub("[[:punct:]]|.", " ", teks_sentimen$teks)
-teks_sentimen$teks <- gsub("[[:digit:]]", " ", teks_sentimen$teks)
+sentiment        <- read.csv("csv_tweets.csv", sep = ";")
+sentiment$text <- as.character(sentiment$text)
+sentiment$text <- tolower(sentiment$text)
+sentiment$text <- gsub("https://t.co/\\w+", " ", sentiment$text)
+sentiment$text <- gsub("@\\w+", " ", sentiment$text)
+sentiment$text <- gsub("[[:punct:]]|.", " ", sentiment$text)
+sentiment$text <- gsub("[[:digit:]]", " ", sentiment$text)
 
 library(tm)
-stopword_bindo <- read.csv("id.stopwords.02.01.2016.csv", header = FALSE)
-stopword_bindo <- as.character(stopword_bindo$V1)
-stopword_bindo <- c(stopword_bindo, stopwords())
-teks_sentimen$teks <- removeWords(teks_sentimen$teks, stopword_bindo)
-teks_sentimen$teks <- stripWhitespace(teks_sentimen$teks)
+stopword_indo <- read.csv("id.stopwords.02.01.2016.csv", header = FALSE)
+stopword_indo <- as.character(stopword_indo$V1)
+stopword_indo <- c(stopword_indo, stopwords())
+sentiment$text <- removeWords(sentiment$text, stopword_indo)
+sentiment$text <- stripWhitespace(sentiment$text)
 ##################################################################################
 
 # Vektorisasi / Vectorization
 
-dtm_sentimen <- DocumentTermMatrix(
+dtm_sentiment <- DocumentTermMatrix(
                     Vcorpus(
-                        VectorSource(teks_sentimen$teks)
+                        VectorSource(sentiment$text)
                     )
                 )
 ##################################################################################
 
 # Buat set data training dan testing / Create training and testing dataset
 
-dtm_sentimen_latih <- dtm_sentimen[1:1800, ]
-dtm_sentimen_uji <- dtm_sentimen[1801:2000, ]
+dtm_sentiment_latih <- dtm_sentiment[1:1800, ]
+dtm_sentiment_uji   <- dtm_sentiment[1801:2000, ]
 
-label_sentimen_latih <- teks_sentimen[1:1800, ]$label
-label_sentimen_uji <- teks_sentimen[1801:2000,]$label
+label_sentiment_latih <- sentiment[1:1800, ]$label
+label_sentiment_uji   <- sentiment[1801:2000,]$label
 
 konversi_jumlah <- function(x){
                        x <- ifelse(x > 0, "Ada",
                       "TAda")
                     }
 
-sentimen_latih <- apply(dtm_sentimen_latih, MARGIN = 2, konversi_jumlah)
-sentimen_uji <- apply(dtm_sentimen_uji, MARGIN = 2, konversi_jumlah)
+sentiment_latih <- apply(dtm_sentiment_latih, MARGIN = 2, konversi_jumlah)
+sentiment_uji   <- apply(dtm_sentiment_uji, MARGIN = 2, konversi_jumlah)
 ##################################################################################
 
 # Tahap training / Training step
 
 library(e1071)
 
-pengklas_sentimen <- naiveBayes(sentimen_latih,label_sentimen_latih)
-prediksi_sentimen <- predict(pengklas_sentimen,sentimen_uji) 
+pengklas_sentiment <- naiveBayes(sentiment_latih,label_sentiment_latih)
+prediksi_sentiment <- predict(pengklas_sentiment,sentiment_uji) 
 ##################################################################################
 
 # Buat tabulasi silang / Create cross-table
